@@ -142,7 +142,11 @@ Output exactly in this format, with no markdown code blocks around it:
     });
   }
 
-}, { connection: connection as any });
+}, { 
+  connection: connection as any,
+  metrics: { maxDataPoints: 0 },
+  stalledInterval: 300000 
+});
 
 resumeWorker.on('failed', (job: Job | undefined, err: Error) => {
   console.error(`[Worker] Job ${job?.id} failed:`, err);
