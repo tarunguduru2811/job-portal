@@ -6,11 +6,9 @@ import path from 'path';
 const pdfParse = require('pdf-parse');
 import { GoogleGenAI } from '@google/genai';
 
-const connection = new IORedis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  maxRetriesPerRequest: null,
-});
+const connection = process.env.REDIS_URL
+  ? new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null, family: 0 })
+  : new IORedis({ host: 'localhost', port: 6379, maxRetriesPerRequest: null });
 
 export const resumeWorker = new Worker('resume-parsing', async (job: Job) => {
   const { applicationId, resumeUrl } = job.data;
