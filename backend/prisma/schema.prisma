@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  JOB_SEEKER
+  EMPLOYER
+  ADMIN
+}
+
+enum LocationType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  ANONYMOUS
+  PRIVATE
+}
+
+enum EmployerRole {
+  ADMIN
+  RECRUITER
+  REVIEWER
+}
+
+enum JobPostStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(JOB_SEEKER)
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Seeker specific
+  resumeUrl      String?
+  skills         String[]
+  visibility     ProfileVisibility @default(PUBLIC)
+  preferredRoles String[]
+  targetSalary   Int?
+  
+  // Employer specific
+  companyId    String?
+  company      Company?       @relation("EmployerCompany", fields: [companyId], references: [id])
+  employerRole EmployerRole?
+  
+  applications Application[]
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  logoUrl     String?
+  bannerUrl   String?
+  website     String?
+  techStack   String[]
+  benefits    String[]
+  socialLinks Json?
+  isVerified  Boolean  @default(false) // Work email verification
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees User[]    @relation("EmployerCompany")
+  jobs      JobPost[]
+}
+
+model JobPost {
+  id           String       @id @default(uuid())
+  title        String
+  description  String
+  requirements String
+  benefits     String[]
+  salaryRange  String?
+  locationType LocationType @default(ONSITE)
+  location     String?      // e.g., "San Francisco, CA"
+  status       JobPostStatus @default(PUBLISHED)
+  screeningQs  Json?
+  goLiveAt     DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  applications Application[]
+}
+
+model Application {
+  id        String            @id @default(uuid())
+  status    ApplicationStatus @default(APPLIED) // Kanban Stage
+  notes     String?           // Internal ATS notes
+  score     Int?              // Candidate score (0-100)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  jobPostId String
+  jobPost   JobPost @relation(fields: [jobPostId], references: [id])
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+
+  // Prevent multiple applications to the same job by the same user
+  @@unique([jobPostId, userId])
+}
