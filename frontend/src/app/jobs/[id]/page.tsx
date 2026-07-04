@@ -17,6 +17,7 @@ type Job = {
   benefits: string[];
   locationType: string;
   salaryRange: string;
+  status: string;
   createdAt: string;
   company: {
     name: string;

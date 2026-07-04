@@ -5,6 +5,7 @@ type User = {
   email: string;
   name: string;
   role: string;
+  companyId?: string | null;
 };
 
 type AuthState = {
